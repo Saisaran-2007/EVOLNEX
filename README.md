@@ -1,4 +1,8 @@
-# EVOLNEX — AI Career Intelligence Platform
+# EVOLNEX – AI-Powered Career Intelligence Platform
+
+🚀 **Live Website:** https://evolnex.onrender.com
+
+EVOLNEX is an AI-powered career intelligence platform designed to help users explore career opportunities and develop their professional skills.
 
 A full-stack career intelligence workspace: resume analysis, job-fit scoring, learning roadmaps,
 portfolio projects, mock interviews, progress analytics and application tracking.
