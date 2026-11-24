@@ -1,0 +1,277 @@
+"use client";
+
+import { useEffect, useState, type ReactNode } from "react";
+import { Icon, type IconName } from "@frontend/components/icons";
+
+export function StatCard({
+  label,
+  value,
+  sub,
+  icon,
+  tone = "blue",
+}: {
+  label: string;
+  value: ReactNode;
+  sub?: ReactNode;
+  icon?: IconName;
+  tone?: "blue" | "green" | "amber" | "violet" | "red";
+}) {
+  const tones: Record<string, string> = {
+    blue: "badge-blue",
+    green: "badge-green",
+    amber: "badge-amber",
+    violet: "badge-violet",
+    red: "badge-red",
+  };
+  return (
+    <div className="card stat-card">
+      <div className="stat-top">
+        <span className="stat-label">{label}</span>
+        {icon ? (
+          <span className={`badge ${tones[tone]}`} style={{ padding: "5px" }}>
+            <Icon name={icon} size={13} />
+          </span>
+        ) : null}
+      </div>
+      <div className="metric">{value}</div>
+      {sub ? <div className="stat-sub">{sub}</div> : null}
+    </div>
+  );
+}
+
+export function ScoreRing({
+  value,
+  size = 132,
+  label,
+  caption,
+  tone = "auto",
+}: {
+  value: number | null;
+  size?: number;
+  label?: string;
+  caption?: string;
+  tone?: "auto" | "blue";
+}) {
+  const score = typeof value === "number" ? Math.max(0, Math.min(100, Math.round(value))) : 0;
+  const radius = (size - 14) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const offset = circumference - (score / 100) * circumference;
+  const color =
+    tone === "blue"
+      ? "#5b8cff"
+      : score >= 78
+        ? "#3ecf8e"
+        : score >= 52
+          ? "#f4b740"
+          : score > 0
+            ? "#f2617a"
+            : "#41506b";
+  return (
+    <div className="row" style={{ gap: 18, alignItems: "center" }}>
+      <div style={{ position: "relative", width: size, height: size, flex: `0 0 ${size}px` }}>
+        <svg width={size} height={size} style={{ transform: "rotate(-90deg)" }}>
+          <circle cx={size / 2} cy={size / 2} r={radius} stroke="rgba(148,172,214,0.14)" strokeWidth={9} fill="none" />
+          <circle
+            cx={size / 2}
+            cy={size / 2}
+            r={radius}
+            stroke={color}
+            strokeWidth={9}
+            fill="none"
+            strokeLinecap="round"
+            strokeDasharray={circumference}
+            strokeDashoffset={offset}
+            style={{ transition: "stroke-dashoffset 0.6s ease" }}
+          />
+        </svg>
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            display: "grid",
+            placeItems: "center",
+            textAlign: "center",
+          }}
+        >
+          <div>
+            <div style={{ fontSize: size > 110 ? 27 : 21, fontWeight: 750, letterSpacing: "-0.03em" }}>
+              {typeof value === "number" ? score : "—"}
+            </div>
+            {label ? <div style={{ fontSize: 10, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.1em" }}>{label}</div> : null}
+          </div>
+        </div>
+      </div>
+      {caption ? <div className="small muted" style={{ maxWidth: 220 }}>{caption}</div> : null}
+    </div>
+  );
+}
+
+export function BarMeter({ label, value, tone = "blue" }: { label: string; value: number; tone?: "blue" | "green" }) {
+  const safe = Math.max(0, Math.min(100, Math.round(value)));
+  return (
+    <div className="bar-row">
+      <span className="muted" style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{label}</span>
+      <div className="bar-track">
+        <div className={`bar-fill ${tone === "green" ? "green" : ""}`} style={{ width: `${safe}%` }} />
+      </div>
+      <span style={{ textAlign: "right", fontWeight: 650 }}>{safe}</span>
+    </div>
+  );
+}
+
+export function EmptyState({
+  title,
+  description,
+  action,
+  icon = "sparkles",
+}: {
+  title: string;
+  description: string;
+  action?: ReactNode;
+  icon?: IconName;
+}) {
+  return (
+    <div className="empty">
+      <div className="empty-icon">
+        <Icon name={icon} size={18} />
+      </div>
+      <div style={{ fontWeight: 650 }}>{title}</div>
+      <p className="small muted" style={{ maxWidth: 420 }}>{description}</p>
+      {action}
+    </div>
+  );
+}
+
+export function Notice({
+  tone = "info",
+  children,
+}: {
+  tone?: "info" | "error" | "success" | "warn";
+  children: ReactNode;
+}) {
+  const icons: Record<string, IconName> = { info: "sparkles", error: "alert", success: "check", warn: "alert" };
+  return (
+    <div className={`alert alert-${tone}`} role={tone === "error" ? "alert" : "status"}>
+      <Icon name={icons[tone]} size={15} style={{ flex: "0 0 15px", marginTop: 2 }} />
+      <div>{children}</div>
+    </div>
+  );
+}
+
+export function EngineBadge({ engine }: { engine?: string | null }) {
+  if (!engine) return null;
+  const isAi = engine === "gemini";
+  return (
+    <span className={`badge ${isAi ? "badge-blue" : "badge-violet"}`} title={isAi ? "Generated by Google Gemini" : "Computed by the deterministic EVOLNEX engine"}>
+      <Icon name={isAi ? "sparkles" : "shield"} size={11} />
+      {isAi ? "Gemini" : "Local engine"}
+    </span>
+  );
+}
+
+export function LineChart({ points, height = 120 }: { points: Array<{ label: string; value: number }>; height?: number }) {
+  if (points.length === 0) return null;
+  const width = 520;
+  const pad = 8;
+  const max = Math.max(100, ...points.map((point) => point.value));
+  const step = points.length > 1 ? (width - pad * 2) / (points.length - 1) : 0;
+  const coords = points.map((point, index) => ({
+    x: pad + index * step,
+    y: height - pad - (point.value / max) * (height - pad * 2),
+  }));
+  const path = coords.map((coord, index) => `${index === 0 ? "M" : "L"}${coord.x.toFixed(1)},${coord.y.toFixed(1)}`).join(" ");
+  const area = `${path} L${coords[coords.length - 1].x.toFixed(1)},${height - pad} L${coords[0].x.toFixed(1)},${height - pad} Z`;
+  return (
+    <div>
+      <svg viewBox={`0 0 ${width} ${height}`} width="100%" height={height} preserveAspectRatio="none">
+        <defs>
+          <linearGradient id="lineFade" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="rgba(91,140,255,0.34)" />
+            <stop offset="100%" stopColor="rgba(91,140,255,0)" />
+          </linearGradient>
+        </defs>
+        <path d={area} fill="url(#lineFade)" />
+        <path d={path} fill="none" stroke="#7ea6ff" strokeWidth="2.2" strokeLinejoin="round" strokeLinecap="round" />
+        {coords.map((coord, index) => (
+          <circle key={index} cx={coord.x} cy={coord.y} r={2.8} fill="#0b1322" stroke="#9dbcff" strokeWidth="1.6" />
+        ))}
+      </svg>
+      <div className="row-between" style={{ marginTop: 4 }}>
+        <span className="tiny">{points[0]?.label}</span>
+        <span className="tiny">{points[points.length - 1]?.label}</span>
+      </div>
+    </div>
+  );
+}
+
+export function SkillChips({
+  skills,
+  tone = "match",
+  empty,
+}: {
+  skills: string[];
+  tone?: "match" | "missing" | "partial" | "default";
+  empty?: string;
+}) {
+  if (skills.length === 0) return <span className="small muted">{empty ?? "None"}</span>;
+  const cls = tone === "default" ? "chip" : `chip chip-${tone}`;
+  return (
+    <div className="row wrap" style={{ gap: 6 }}>
+      {skills.map((skill) => (
+        <span key={skill} className={cls}>
+          {skill}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+export function PageHeader({
+  title,
+  subtitle,
+  actions,
+}: {
+  title: string;
+  subtitle: string;
+  actions?: ReactNode;
+}) {
+  return (
+    <div className="row-between wrap" style={{ gap: 14, alignItems: "flex-end" }}>
+      <div>
+        <h1 className="page-title">{title}</h1>
+        <p className="page-sub">{subtitle}</p>
+      </div>
+      {actions ? <div className="row wrap" style={{ gap: 8 }}>{actions}</div> : null}
+    </div>
+  );
+}
+
+export function CountUp({ value, suffix = "", duration = 900 }: { value: number; suffix?: string; duration?: number }) {
+  const [display, setDisplay] = useState(0);
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      setDisplay(value);
+      return;
+    }
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setDisplay(value);
+      return;
+    }
+    let frame = 0;
+    const start = performance.now();
+    const tick = (now: number) => {
+      const progress = Math.min(1, (now - start) / duration);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setDisplay(Math.round(eased * value));
+      if (progress < 1) frame = requestAnimationFrame(tick);
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, [value, duration]);
+  return (
+    <span style={{ fontVariantNumeric: "tabular-nums" }}>
+      {display}
+      {suffix}
+    </span>
+  );
+}
